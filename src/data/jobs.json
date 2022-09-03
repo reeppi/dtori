@@ -5172,7 +5172,7 @@
       "salary": {
         "low_value": "800.00",
         "high_value": "2000.00",
-        "value_period": "h"
+        "value_period": "m"
       }
     },
     {
