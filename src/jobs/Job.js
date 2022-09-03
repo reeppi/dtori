@@ -13,12 +13,15 @@ class Job extends Component  {
                     company:"", 
                     salary:0, 
                     period:"",
+                    search:"",
 
                     order_:1,
                     city_: "",
                     company_:"", 
                     salary_:0, 
                     period_:"",
+                    search_:""
+
                   }
     }
 
@@ -29,7 +32,13 @@ class Job extends Component  {
         company_:this.state.company, 
         salary_:this.state.salary, 
         period_:this.state.period,
+        search_:this.state.search,
       } )
+    }
+
+    keyPress(e) {
+      if ( e.key == 'Enter')
+        this.submit();
     }
 
     render() {
@@ -53,17 +62,21 @@ class Job extends Component  {
 
                 <table>
                   <tbody>
+                  <tr>
+                    <td>Vapaa haku</td>
+                    <td><input type="text"  value={this.state.search}  onKeyPress={(e) => this.keyPress(e)}  onChange={ (e)=>{ this.setState({search: e.target.value})}}/></td>
+                  </tr>
                   <tr style={{background:"#e8e8e8"}}>
                     <td>Kaupunki  </td>
-                    <td><input type="text" value={this.state.city} onChange={ (e)=>{ this.setState({city: e.target.value})}}/></td>
+                    <td><input type="text"  value={this.state.city}  onKeyPress={(e) => this.keyPress(e)}  onChange={ (e)=>{ this.setState({city: e.target.value})}}/></td>
                   </tr>
                   <tr>
                     <td>Yritys  </td>
-                    <td><input type="text" value={this.state.company} onChange={ (e)=>{this.setState({company: e.target.value})}}/></td>
+                    <td><input type="text" value={this.state.company} onKeyPress={(e) => this.keyPress(e)}  onChange={ (e)=>{this.setState({company: e.target.value})}}/></td>
                   </tr>
                   <tr style={{background:"#e8e8e8"}}>
                     <td>Palkka min (€) </td>
-                    <td><input type="text" value={this.state.salary} onChange={ (e)=>{this.setState({salary: e.target.value})}}/></td>
+                    <td><input type="text" value={this.state.salary} onKeyPress={(e) => this.keyPress(e)}  onChange={ (e)=>{this.setState({salary: e.target.value})}}/></td>
                   </tr>
                   <tr >
                     <td>Palkan jakso  </td>
@@ -100,6 +113,7 @@ class Job extends Component  {
               </div>
 
               <JobList 
+                search={this.state.search_}
                 period={this.state.period_}
                 city={this.state.city_}
                 company={this.state.company_}
@@ -122,18 +136,35 @@ const JobList = React.memo( function JobList (props)
   jobList=jobList.filter((e)=>e.municipality_name.toLowerCase().includes(props.city.toLowerCase()));
   jobList=jobList.filter((e)=>e.company_name.toLowerCase().includes(props.company.toLowerCase()));
 
+  console.log("--> "+props.period);
   if ( props.period == "h")    
   jobList=jobList.filter((e)=>{
       if ( e.salary.value_period == "h" )
-        return Number(e.salary.low_value)>Number(props.salary);
+        return Number(e.salary.low_value)>=Number(props.salary);
+      else
+        return false;
     }
     );
+
   if ( props.period == "m")  
   jobList=jobList.filter((e)=>{
       if ( e.salary.value_period == "m" )
-        return Number(e.salary.low_value)>Number(props.salary);
+        return Number(e.salary.low_value)>=Number(props.salary);
+      else
+        return false;
+  
     }
     );
+  
+  if ( props.search )
+  {
+      jobList=jobList.filter((e)=>
+         e.descr.toLowerCase().includes(props.search.toLowerCase())
+      || e.heading.toLowerCase().includes(props.search.toLowerCase())
+      || e.company_name.toLowerCase().includes(props.search.toLowerCase())
+      );
+  }
+
 
   jobList.forEach((jobDetail)=>
   {
@@ -141,10 +172,10 @@ const JobList = React.memo( function JobList (props)
       jobDetail.e=parseInt((new Date(jobDetail.date_ends.slice(0,10)).getTime()));
   });
 
-  if ( props.order == 2 )
-     jobList.sort((a,b)=>a.p-b.p); 
   if ( props.order == 1 )
      jobList.sort((a,b)=>b.p-a.p);
+  if ( props.order == 2 )
+     jobList.sort((a,b)=>a.p-b.p); 
   if ( props.order == 3 )
      jobList.sort((a,b)=>b.salary.low_value-a.salary.low_value);
 
@@ -175,10 +206,15 @@ function JobEntry ({jobDetail,index})
     short.style.display="block";
     long.style.display="none";
   }
-  
+
+  var d = new Date(jobDetail.p);
+  var posted = d.getDate()+"."+(d.getMonth()+1)+"."+d.getFullYear();
+  var e = new Date(jobDetail.e);
+  var ends = e.getDate()+"."+(e.getMonth()+1)+"."+e.getFullYear();
+
   return (
   <div key={index}>{index+1}.<br/>
-      <table style={{width:"100%", background: index%2?"#e8e8e8":"white"}}>
+      <table style={{width:"100%", background: (index+1)%2?"#e8e8e8":"white"}}>
       <tbody>
       <tr>
         <td>Yritys</td>
@@ -190,11 +226,11 @@ function JobEntry ({jobDetail,index})
       </tr>
       <tr>
         <td>Ilmoitus jätetty</td>
-        <td>{jobDetail.date_posted.slice(0,10)}</td>
+        <td>{posted}</td>
       </tr>
       <tr>
         <td>Ilmoitus poistuu</td>
-        <td>{jobDetail.date_ends.slice(0,10)}</td>
+        <td>{ends}</td>
       </tr>
       <tr>
         <td>Min. Palkka</td>
@@ -206,18 +242,19 @@ function JobEntry ({jobDetail,index})
         <td>{jobDetail.salary.high_value} {  jobDetail.salary.value_period == "m" ? "€/kk" : "€/h" }</td>
       </tr>
       }
-      </tbody>
+      </tbody >
       </table>
-        <strong>Kuvaus</strong>
+      <div style={{width:"100%", background: (index+1)%2?"#e8e8e8":"white"}}>
+        <strong>{ jobDetail.heading }</strong>
         <div id={index+"short"}>
-          <div style={{whiteSpace: "pre-line"}}>{jobDetail.descr.slice(0,100)}...</div>
-          <strong><a onClick={()=> showDesc()} style={{cursor:"pointer"}}><u>Lue koko kuvaus tästä</u></a></strong>
+          <div style={{whiteSpace: "pre-line"}}>{jobDetail.descr.slice(0,150)}...</div>
+          <div onClick={()=> showDesc()} style={{cursor:"pointer"}}> <u>Lue koko ilmoitus tästä</u></div>
         </div>
         <div id={index+"long"} style={{display:"none"}}>
           <div style={{whiteSpace: "pre-line"}} id={index+"a"}>{jobDetail.descr}</div>
-          <strong><a onClick={()=> closeDesc()} style={{cursor:"pointer"}}><u>Sulje kuvaus</u></a></strong>
+          <a onClick={()=> closeDesc()} style={{cursor:"pointer"}}><u>Sulje ilmoitus</u></a>
         </div>
- 
+        </div>
       <br/>
   </div>)
 }
