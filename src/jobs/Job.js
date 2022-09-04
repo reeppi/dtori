@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useState } from "react";
 import JobData from '../data/jobs.json';
 import '../style.css';
 
@@ -14,7 +14,7 @@ class Job extends Component  {
                     salary:0, 
                     period:"",
                     search:"",
-
+                    
                     order_:1,
                     city_: "",
                     company_:"", 
@@ -127,16 +127,17 @@ class Job extends Component  {
      
       }
 
-
+const numPerPage=50;
 const JobList = React.memo( function JobList (props)
 {
+  const [next, setNext] = useState(numPerPage);
+
   console.log("joblist render");
   var jobList=JobData.jobs;
 
   jobList=jobList.filter((e)=>e.municipality_name.toLowerCase().includes(props.city.toLowerCase()));
   jobList=jobList.filter((e)=>e.company_name.toLowerCase().includes(props.company.toLowerCase()));
 
-  console.log("--> "+props.period);
   if ( props.period == "h")    
   jobList=jobList.filter((e)=>{
       if ( e.salary.value_period == "h" )
@@ -161,7 +162,8 @@ const JobList = React.memo( function JobList (props)
       jobList=jobList.filter((e)=>
          e.descr.toLowerCase().includes(props.search.toLowerCase())
       || e.heading.toLowerCase().includes(props.search.toLowerCase())
-      || e.company_name.toLowerCase().includes(props.search.toLowerCase())
+      || e.company_name.toLowerCase().includes(props.search.toLowerCase()
+      )
       );
   }
 
@@ -183,11 +185,14 @@ const JobList = React.memo( function JobList (props)
   <>
        <h4>Löydetyt työpaikat ({jobList.length} kpl)</h4>
           <hr/>
-          { jobList.map((jobDetail, index)=> <JobEntry jobDetail={jobDetail} key={index} index={index}/>)}
+          { jobList.slice(0,next).map((jobDetail, index)=> <JobEntry jobDetail={jobDetail} key={index} index={index}/>)}
+          { next < jobList.length && 
+            <div onClick={()=> setNext(next+numPerPage)} style={{background:"silver", cursor:"pointer",width:"100%",display:"flex",justifyContent:"center"}}>
+            <u> <strong>Avaa lisää ilmoituksia tästä</strong></u></div> }
           <hr/>
+        
   </>
   )
-
 })
 
 function JobEntry ({jobDetail,index})
