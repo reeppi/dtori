@@ -7,7 +7,7 @@ class Job extends Component  {
 
     constructor() {
       super();
-      document.title="harkkatyo";
+      document.title="Ennakkotehtävä";
       this.state = {order:1,
                     city: "",
                     company:"", 
@@ -51,7 +51,7 @@ class Job extends Component  {
             </div>
             <div style={{paddingLeft:"20px"}}>
             <h3>DEMO</h3>
-            Tämä on harjoitustyö<br/>
+            Tämä on ennakkotehtävä<br/>
             <a href="http://www.duunitori.fi">duunitori.fi</a>
             </div>
           </div>
@@ -81,21 +81,17 @@ class Job extends Component  {
                   <tr >
                     <td>Palkan jakso  </td>
                     <td>
-                    <form>
                       <input type="radio" value="h" name="period" onChange={(e)=>this.setState({period:e.target.value})}/>Tunti<br/>
                       <input type="radio" value="m" name="period" onChange={(e)=>this.setState({period:e.target.value})}/>Kuukausi<br/>
                       <input type="radio" value="" defaultChecked="true"  name="period" onChange={(e)=>this.setState({period:e.target.value})}/>Ei väliä<br/>
-                    </form>
                     </td>
                   </tr>
                   <tr style={{background:"#e8e8e8"}}>
                     <td>Järjestä  </td>
                     <td>
-                    <form>
                       <input type="radio" value="1" defaultChecked="true" name="order" onChange={(e)=>this.setState({order:e.target.value})}/>Uusin ensin<br/>
                       <input type="radio" value="2" name="order" onChange={(e)=>this.setState({order:e.target.value})}/>Vanhin ensin<br/>
                       <input type="radio" value="3" name="order" onChange={(e)=>this.setState({order:e.target.value})}/>Suurin min. palkka<br/>
-                    </form>
                     </td>
                   </tr>
                   <tr>
@@ -127,16 +123,35 @@ class Job extends Component  {
      
       }
 
-const numPerPage=50;
 const JobList = React.memo( function JobList (props)
 {
+  const numPerPage=50;
   const [next, setNext] = useState(numPerPage);
 
-  console.log("joblist render");
+  console.log("joblist render!");
   var jobList=JobData.jobs;
+
 
   jobList=jobList.filter((e)=>e.municipality_name.toLowerCase().includes(props.city.toLowerCase()));
   jobList=jobList.filter((e)=>e.company_name.toLowerCase().includes(props.company.toLowerCase()));
+
+  const searchArry = props.search.split(" ");
+  const lowerArry = searchArry.map(e=> e.toLowerCase());
+
+  if ( props.search )
+  {
+      jobList=jobList.filter((e)=>
+      {
+        for (var x=0;x<lowerArry.length;x++)
+        {
+          if ( e.descr.toLowerCase().includes(lowerArry[x])
+          || e.heading.toLowerCase().includes(lowerArry[x])
+          || e.company_name.toLowerCase().includes(lowerArry[x]))
+            return true;
+        }
+      }
+      );
+  }
 
   if ( props.period == "h")    
   jobList=jobList.filter((e)=>{
@@ -157,16 +172,6 @@ const JobList = React.memo( function JobList (props)
     }
     );
   
-  if ( props.search )
-  {
-      jobList=jobList.filter((e)=>
-         e.descr.toLowerCase().includes(props.search.toLowerCase())
-      || e.heading.toLowerCase().includes(props.search.toLowerCase())
-      || e.company_name.toLowerCase().includes(props.search.toLowerCase()
-      )
-      );
-  }
-
 
   jobList.forEach((jobDetail)=>
   {
@@ -253,11 +258,11 @@ function JobEntry ({jobDetail,index})
         <strong>{ jobDetail.heading }</strong>
         <div id={index+"short"}>
           <div style={{whiteSpace: "pre-line"}}>{jobDetail.descr.slice(0,150)}...</div>
-          <div onClick={()=> showDesc()} style={{cursor:"pointer"}}> <u>Lue koko ilmoitus tästä</u></div>
+          <div onClick={()=> showDesc()} style={{cursor:"pointer"}}>&gt; <u>Lue koko ilmoitus tästä</u></div>
         </div>
         <div id={index+"long"} style={{display:"none"}}>
           <div style={{whiteSpace: "pre-line"}} id={index+"a"}>{jobDetail.descr}</div>
-          <a onClick={()=> closeDesc()} style={{cursor:"pointer"}}><u>Sulje ilmoitus</u></a>
+          <div onClick={()=> closeDesc()} style={{cursor:"pointer"}}> &gt; <u>Sulje ilmoitus</u></div>
         </div>
         </div>
       <br/>
