@@ -1,6 +1,7 @@
 import React, { Component, useState } from "react";
 import JobData from '../data/jobs.json';
 import '../style.css';
+import { Button } from 'react-bootstrap';
 
 
 class Job extends Component  {
@@ -8,25 +9,55 @@ class Job extends Component  {
     constructor() {
       super();
       document.title="Ennakkotehtävä";
-      this.state = {order:1,
-                    city: "",
-                    company:"", 
+      this.searchInputRef = React.createRef();
+      this.cityInputRef = React.createRef();
+      this.companyInputRef = React.createRef();
+      this.state = {
+                    order:1,
                     salary:0, 
                     period:"",
-                    search:"",
-                    
+                    searchArry:[],
+                    companyArry:[],
+                    cityArry:[],
                     order_:1,
-                    city_: "",
-                    company_:"", 
                     salary_:0, 
                     period_:"",
-                    search_:""
 
                   }
     }
 
     submit(){
+
+      var tmpSearch = this.state.searchArry.slice();
+      const tp = this.searchInputRef.current.getValue();
+      console.log("---> "+tp);
+      if (tp)
+      {
+        tmpSearch.push(tp);
+        this.searchInputRef.current.setValue("");
+      }
+
+      var tmpCity = this.state.cityArry.slice();
+      const tpCity = this.cityInputRef.current.getValue();
+      if (tpCity)
+      {
+        tmpCity.push(tpCity);
+        this.cityInputRef.current.setValue("");
+      }
+
+      var tmpCompany = this.state.companyArry.slice();
+      const tpCompany = this.companyInputRef.current.getValue();
+      if (tpCompany)
+      {
+        tmpCompany.push(tpCompany);
+        this.companyInputRef.current.setValue("");
+      }
+
+   
       this.setState( {
+        searchArry:tmpSearch,
+        cityArry:tmpCity,
+        companyArry:tmpCompany,
         order_: this.state.order,
         city_: this.state.city,
         company_:this.state.company, 
@@ -35,7 +66,7 @@ class Job extends Component  {
         search_:this.state.search,
       } )
     }
-
+ 
     keyPress(e) {
       if ( e.key == 'Enter')
         this.submit();
@@ -64,15 +95,17 @@ class Job extends Component  {
                   <tbody>
                   <tr>
                     <td>Vapaa haku</td>
-                    <td><input type="text"  value={this.state.search}  onKeyPress={(e) => this.keyPress(e)}  onChange={ (e)=>{ this.setState({search: e.target.value})}}/></td>
+                    <td>
+                    <InputEntry ref={this.searchInputRef}  values={this.state.searchArry} set={(e)=> this.setState({searchArry:e}) } />
+                    </td>
                   </tr>
                   <tr style={{background:"#e8e8e8"}}>
-                    <td>Kaupunki  </td>
-                    <td><input type="text"  value={this.state.city}  onKeyPress={(e) => this.keyPress(e)}  onChange={ (e)=>{ this.setState({city: e.target.value})}}/></td>
+                    <td>Kunta  </td>
+                    <td><InputEntry ref={this.cityInputRef}  values={this.state.cityArry} set={(e)=> this.setState({cityArry:e}) } /></td>
                   </tr>
                   <tr>
                     <td>Yritys  </td>
-                    <td><input type="text" value={this.state.company} onKeyPress={(e) => this.keyPress(e)}  onChange={ (e)=>{this.setState({company: e.target.value})}}/></td>
+                    <td><InputEntry ref={this.companyInputRef}  values={this.state.companyArry} set={(e)=> this.setState({companyArry:e}) } /></td>
                   </tr>
                   <tr style={{background:"#e8e8e8"}}>
                     <td>Palkka min (€) </td>
@@ -81,17 +114,17 @@ class Job extends Component  {
                   <tr >
                     <td>Palkan jakso  </td>
                     <td>
-                      <input type="radio" value="h" name="period" onChange={(e)=>this.setState({period:e.target.value})}/>Tunti<br/>
-                      <input type="radio" value="m" name="period" onChange={(e)=>this.setState({period:e.target.value})}/>Kuukausi<br/>
-                      <input type="radio" value="" defaultChecked="true"  name="period" onChange={(e)=>this.setState({period:e.target.value})}/>Ei väliä<br/>
+                      <input type="radio" value="h" name="period" onChange={(e)=>this.setState({period:e.target.value},()=>this.submit())}/>Tunti<br/>
+                      <input type="radio" value="m" name="period" onChange={(e)=>this.setState({period:e.target.value},()=>this.submit())}/>Kuukausi<br/>
+                      <input type="radio" value="" defaultChecked="true"  name="period" onChange={(e)=>this.setState({period:e.target.value},()=>this.submit())}/>Ei väliä<br/>
                     </td>
                   </tr>
                   <tr style={{background:"#e8e8e8"}}>
                     <td>Järjestä  </td>
                     <td>
-                      <input type="radio" value="1" defaultChecked="true" name="order" onChange={(e)=>this.setState({order:e.target.value})}/>Uusin ensin<br/>
-                      <input type="radio" value="2" name="order" onChange={(e)=>this.setState({order:e.target.value})}/>Vanhin ensin<br/>
-                      <input type="radio" value="3" name="order" onChange={(e)=>this.setState({order:e.target.value})}/>Suurin min. palkka<br/>
+                      <input type="radio" value="1" defaultChecked="true" name="order" onChange={(e)=>this.setState({order:e.target.value},()=>this.submit())}/>Uusin ensin<br/>
+                      <input type="radio" value="2"   name="order" onChange={(e)=>this.setState({order:e.target.value},()=>this.submit())}/>Vanhin ensin<br/>
+                      <input type="radio" value="3"  name="order" onChange={(e)=>this.setState({order:e.target.value},()=>this.submit())}/>Suurin min. palkka<br/>
                     </td>
                   </tr>
                   <tr>
@@ -109,10 +142,10 @@ class Job extends Component  {
               </div>
 
               <JobList 
-                search={this.state.search_}
+                search={this.state.searchArry}
+                city={this.state.cityArry}
+                company={this.state.companyArry}
                 period={this.state.period_}
-                city={this.state.city_}
-                company={this.state.company_}
                 salary={this.state.salary_}
                 order={this.state.order_}
               />
@@ -123,6 +156,45 @@ class Job extends Component  {
      
       }
 
+const InputEntry = React.forwardRef((props,ref) =>
+{
+  const [inputText, setInputText] = useState("");
+
+  const inputRef = React.useRef();
+  React.useImperativeHandle(ref, () => ({
+    getValue: () => {
+      return inputRef.current.value;
+    },
+    setValue: (value) => {
+      setInputText(value);
+    }
+  }));
+
+return (
+  <>
+  { props.values.map((e,index)=>
+    <div key={index} style={{padding:"1px"}}><Button className="rounded-pill" onClick={(e)=>{
+    const tmp = props.values.slice();
+    tmp.splice(index,1);
+    props.set(tmp);
+  }}>{e}</Button></div>)}
+  <input ref={inputRef} type="text" value={inputText}  onKeyPress={e => 
+  {
+    if ( e.key == 'Enter') 
+    {
+    const tmp = props.values.slice();
+    if ( e.target.value )
+      tmp.push(e.target.value);
+    setInputText("");
+    props.set(tmp);
+    }
+  } 
+  }
+  onChange={ (e)=>{ setInputText(e.target.value); }}/>
+  </>)
+})
+      
+
 const JobList = React.memo( function JobList (props)
 {
   const numPerPage=50;
@@ -131,15 +203,31 @@ const JobList = React.memo( function JobList (props)
   console.log("joblist render!");
   var jobList=JobData.jobs;
 
-
-  jobList=jobList.filter((e)=>e.municipality_name.toLowerCase().includes(props.city.toLowerCase()));
-  jobList=jobList.filter((e)=>e.company_name.toLowerCase().includes(props.company.toLowerCase()));
-
-  const searchArry = props.search.split(" ");
-  const lowerArry = searchArry.map(e=> e.toLowerCase());
-
-  if ( props.search )
+  console.log(props.city);
+  if ( props.city && props.city.length > 0 )
   {
+  jobList=jobList.filter((e)=> {
+    var lowerArry = props.city.map(e=> e.toLowerCase());
+    for (var x=0;x<lowerArry.length;x++)
+      if( e.municipality_name.toLowerCase().includes(lowerArry[x].toLowerCase()))
+        return true;
+    }
+    )
+  }
+  if ( props.company && props.company.length > 0 )
+  {
+    jobList=jobList.filter((e)=> {
+      var lowerArry = props.company.map(e=> e.toLowerCase());
+      for (var x=0;x<lowerArry.length;x++)
+        if( e.company_name.toLowerCase().includes(lowerArry[x].toLowerCase()))
+          return true;
+      }
+    )
+  }
+
+  if ( props.search && props.search.length > 0 )
+  {
+      var lowerArry = props.search.map(e=> e.toLowerCase());
       jobList=jobList.filter((e)=>
       {
         for (var x=0;x<lowerArry.length;x++)
@@ -160,7 +248,8 @@ const JobList = React.memo( function JobList (props)
       else
         return false;
     }
-    );
+  );
+    
 
   if ( props.period == "m")  
   jobList=jobList.filter((e)=>{
@@ -170,8 +259,10 @@ const JobList = React.memo( function JobList (props)
         return false;
   
     }
-    );
-  
+  );
+
+  if ( props.period == "")  
+  jobList=jobList.filter((e)=>Number(e.salary.low_value)>=Number(props.salary))
 
   jobList.forEach((jobDetail)=>
   {
@@ -184,7 +275,7 @@ const JobList = React.memo( function JobList (props)
   if ( props.order == 2 )
      jobList.sort((a,b)=>a.p-b.p); 
   if ( props.order == 3 )
-     jobList.sort((a,b)=>b.salary.low_value-a.salary.low_value);
+     jobList.sort((a,b)=>Number(b.salary.low_value)-Number(a.salary.low_value));
 
   return (
   <>
