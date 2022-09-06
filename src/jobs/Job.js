@@ -2,8 +2,9 @@ import React, { Component, useState } from "react";
 import JobData from '../data/jobs.json';
 import '../style.css';
 import { Button } from 'react-bootstrap';
-import Form from 'react-bootstrap/Form'
-
+import Form from 'react-bootstrap/Form';
+import 'react-bootstrap-typeahead/css/Typeahead.css';
+import { Typeahead } from 'react-bootstrap-typeahead';
 
 var cities = {};
 var companies = {};
@@ -99,9 +100,7 @@ class Job extends Component  {
       const tpCompany = this.companyInputRef.current.getValue();
       if (tpCompany)
       {
-        const split = tpCompany.split(" ");
-        console.log("split" +split );
-        tmpCompany.push(...split);
+        tmpCompany.push(tpCompany);
         this.companyInputRef.current.setValue("");
       }
 
@@ -155,15 +154,15 @@ class Job extends Component  {
                   </tr>
                   <tr style={{background:"#e8e8e8"}}>
                     <td>Sijainti  </td>
-                    <td><InputEntry fillId="1" split={true} ref={this.cityInputRef}  values={this.state.cityArry} set={(e)=> this.setState({cityArry:e}) } /></td>
+                    <td><InputEntry fillId="1" datas={allCities} split={true} ref={this.cityInputRef}  values={this.state.cityArry} set={(e)=> this.setState({cityArry:e}) } /></td>
                   </tr>
                   <tr>
                     <td>Yritys  </td>
-                    <td><InputEntry fillId="2"  split={true}  ref={this.companyInputRef}  values={this.state.companyArry} set={(e)=> this.setState({companyArry:e}) } /></td>
+                    <td><InputEntry fillId="2" datas={allCompanies} split={false}  ref={this.companyInputRef}  values={this.state.companyArry} set={(e)=> this.setState({companyArry:e}) } /></td>
                   </tr>
                   <tr style={{background:"#e8e8e8"}}>
                     <td>Palkka min (€) </td>
-                    <td><Form.Control type="text" value={this.state.salary} onKeyPress={(e) => this.keyPress(e)}  onChange={ (e)=>{this.setState({salary: e.target.value})}}/></td>
+                    <td><Form.Control fillId="0" type="text" value={this.state.salary} onKeyPress={(e) => this.keyPress(e)}  onChange={ (e)=>{this.setState({salary: e.target.value})}}/></td>
                   </tr>
                   <tr >
                     <td>Palkan jakso  </td>
@@ -214,13 +213,17 @@ const InputEntry = React.forwardRef((props,ref) =>
 {
   const [inputText, setInputText] = useState("");
 
+
   const inputRef = React.useRef();
+
   React.useImperativeHandle(ref, () => ({
     getValue: () => {
-      return inputRef.current.value;
+        return inputRef.current.value;
     },
     setValue: (value) => {
+      console.log("clear");
       setInputText(value);
+
     }
   }));
 
@@ -239,6 +242,7 @@ const InputEntry = React.forwardRef((props,ref) =>
       else 
       tmp.push(e.target.value);
     }
+    console.log("--> "+inputText);
     setInputText("");
     props.set(tmp);
     }
@@ -247,21 +251,16 @@ const InputEntry = React.forwardRef((props,ref) =>
 return (
   <>
   { props.values.map((e,index)=>
-    <div key={index} style={{padding:"1px"}}><Button className="rounded-pill" onClick={(e)=>{
+    <div key={index} style={{padding:"1px"}}>
+    <Button className="rounded-pill" onClick={(e)=>{
     const tmp = props.values.slice();
     tmp.splice(index,1);
     props.set(tmp);
   }}>{e}</Button></div>)}
 
-  { props.fillId == "1" &&
+  { Number(props.fillId) > 0 &&
   <datalist id={"fill"+props.fillId}>
-    {  allCities.map((e,index)=><option key={index} value={e}/>)  }
-  </datalist>
-  }
-
-  { props.fillId == "2" &&
-  <datalist id={"fill"+props.fillId}>
-    {  allCompanies.map((e,index)=><option key={index} value={e}/>)  }
+    {  props.datas && props.datas.map((e,index)=><option key={index} value={e}/>)  }
   </datalist>
   }
 
@@ -272,6 +271,7 @@ return (
   onKeyPress={e => keyPress(e)} 
   onChange={ (e)=>{ setInputText(e.target.value); }}
   />
+  
 
 
   </>)
@@ -366,7 +366,7 @@ const JobList = React.memo( function JobList (props)
           { jobList.slice(0,next).map((jobDetail, index)=> <JobEntry jobDetail={jobDetail} key={index} index={index}/>)}
           { next < jobList.length && 
             <div onClick={()=> setNext(next+numPerPage)} style={{background:"silver", cursor:"pointer",width:"100%",display:"flex",justifyContent:"center"}}>
-            <u> <strong>Avaa lisää ilmoituksia tästä</strong></u></div> }
+            <u> <strong>Lue lisää ilmoituksia tästä</strong></u></div> }
           <hr/>
         
   </>
@@ -404,7 +404,7 @@ function JobEntry ({jobDetail,index})
         <td><strong>{jobDetail.company_name}</strong></td>
       </tr>
       <tr>
-        <td  style={{width:"150px"}}>Kunta</td>
+        <td  style={{width:"150px"}}>Sijainti</td>
         <td>{jobDetail.municipality_name}</td>
       </tr>
       <tr>
