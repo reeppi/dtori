@@ -2,6 +2,54 @@ import React, { Component, useState } from "react";
 import JobData from '../data/jobs.json';
 import '../style.css';
 import { Button } from 'react-bootstrap';
+import Form from 'react-bootstrap/Form'
+
+
+var cities = {};
+var companies = {};
+JobData.jobs.forEach(e => 
+  {
+      if ( e.municipality_name )
+      {
+      var arr = e.municipality_name.split("-")
+      if ( arr.length > 1 )
+        cities[arr[1].trim()]=true;
+      else 
+        cities[arr[0].trim()]=true;
+      }
+      if ( e.company_name )
+        {
+          companies[e.company_name]=true;
+        }
+  }
+)
+
+const allCompanies=Object.keys(companies).sort((a,b)=>
+{  
+  const nameA = a.toUpperCase();
+  const nameB = b.toUpperCase();
+  if (nameA < nameB) 
+    return -1;
+  if (nameA > nameB) 
+    return 1;
+  return 0;  
+})
+
+
+const allCities=Object.keys(cities).sort((a,b)=>
+{
+  const nameA = a.toUpperCase();
+  const nameB = b.toUpperCase();
+  if (nameA < nameB) 
+    return -1;
+  if (nameA > nameB) 
+    return 1;
+  return 0;  
+
+});
+
+
+
 
 
 class Job extends Component  {
@@ -41,7 +89,9 @@ class Job extends Component  {
       const tpCity = this.cityInputRef.current.getValue();
       if (tpCity)
       {
-        tmpCity.push(tpCity);
+        const split = tpCity.split(" ");
+        console.log("split" +split );
+        tmpCity.push(...split);
         this.cityInputRef.current.setValue("");
       }
 
@@ -49,7 +99,9 @@ class Job extends Component  {
       const tpCompany = this.companyInputRef.current.getValue();
       if (tpCompany)
       {
-        tmpCompany.push(tpCompany);
+        const split = tpCompany.split(" ");
+        console.log("split" +split );
+        tmpCompany.push(...split);
         this.companyInputRef.current.setValue("");
       }
 
@@ -72,7 +124,9 @@ class Job extends Component  {
         this.submit();
     }
 
-    render() {
+ 
+    render() 
+    {
       console.log("main render");
         return(<div>
 
@@ -96,20 +150,20 @@ class Job extends Component  {
                   <tr>
                     <td>Vapaa haku</td>
                     <td>
-                    <InputEntry ref={this.searchInputRef}  values={this.state.searchArry} set={(e)=> this.setState({searchArry:e}) } />
+                    <InputEntry fillId="0" ref={this.searchInputRef}  values={this.state.searchArry} set={(e)=> this.setState({searchArry:e}) } />
                     </td>
                   </tr>
                   <tr style={{background:"#e8e8e8"}}>
-                    <td>Kunta  </td>
-                    <td><InputEntry ref={this.cityInputRef}  values={this.state.cityArry} set={(e)=> this.setState({cityArry:e}) } /></td>
+                    <td>Sijainti  </td>
+                    <td><InputEntry fillId="1" split={true} ref={this.cityInputRef}  values={this.state.cityArry} set={(e)=> this.setState({cityArry:e}) } /></td>
                   </tr>
                   <tr>
                     <td>Yritys  </td>
-                    <td><InputEntry ref={this.companyInputRef}  values={this.state.companyArry} set={(e)=> this.setState({companyArry:e}) } /></td>
+                    <td><InputEntry fillId="2"  split={true}  ref={this.companyInputRef}  values={this.state.companyArry} set={(e)=> this.setState({companyArry:e}) } /></td>
                   </tr>
                   <tr style={{background:"#e8e8e8"}}>
                     <td>Palkka min (€) </td>
-                    <td><input type="text" value={this.state.salary} onKeyPress={(e) => this.keyPress(e)}  onChange={ (e)=>{this.setState({salary: e.target.value})}}/></td>
+                    <td><Form.Control type="text" value={this.state.salary} onKeyPress={(e) => this.keyPress(e)}  onChange={ (e)=>{this.setState({salary: e.target.value})}}/></td>
                   </tr>
                   <tr >
                     <td>Palkan jakso  </td>
@@ -170,6 +224,26 @@ const InputEntry = React.forwardRef((props,ref) =>
     }
   }));
 
+
+  const keyPress = (e) => {
+    if ( e.key == 'Enter') 
+    {
+    const tmp = props.values.slice();
+    if ( e.target.value )
+    {
+      if ( props.split )
+      {
+        const split=e.target.value.split(" ");
+        tmp.push(...split);  
+      } 
+      else 
+      tmp.push(e.target.value);
+    }
+    setInputText("");
+    props.set(tmp);
+    }
+  }
+
 return (
   <>
   { props.values.map((e,index)=>
@@ -178,19 +252,28 @@ return (
     tmp.splice(index,1);
     props.set(tmp);
   }}>{e}</Button></div>)}
-  <input ref={inputRef} type="text" value={inputText}  onKeyPress={e => 
-  {
-    if ( e.key == 'Enter') 
-    {
-    const tmp = props.values.slice();
-    if ( e.target.value )
-      tmp.push(e.target.value);
-    setInputText("");
-    props.set(tmp);
-    }
-  } 
+
+  { props.fillId == "1" &&
+  <datalist id={"fill"+props.fillId}>
+    {  allCities.map((e,index)=><option key={index} value={e}/>)  }
+  </datalist>
   }
-  onChange={ (e)=>{ setInputText(e.target.value); }}/>
+
+  { props.fillId == "2" &&
+  <datalist id={"fill"+props.fillId}>
+    {  allCompanies.map((e,index)=><option key={index} value={e}/>)  }
+  </datalist>
+  }
+
+  <Form.Control list={"fill"+props.fillId}
+  ref={inputRef} 
+  type="text" 
+  value={inputText}  
+  onKeyPress={e => keyPress(e)} 
+  onChange={ (e)=>{ setInputText(e.target.value); }}
+  />
+
+
   </>)
 })
       
@@ -203,7 +286,6 @@ const JobList = React.memo( function JobList (props)
   console.log("joblist render!");
   var jobList=JobData.jobs;
 
-  console.log(props.city);
   if ( props.city && props.city.length > 0 )
   {
   jobList=jobList.filter((e)=> {
