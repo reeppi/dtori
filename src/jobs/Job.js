@@ -51,8 +51,6 @@ const allCities=Object.keys(cities).sort((a,b)=>
 
 
 
-
-
 class Job extends Component  {
 
     constructor() {
@@ -61,6 +59,7 @@ class Job extends Component  {
       this.searchInputRef = React.createRef();
       this.cityInputRef = React.createRef();
       this.companyInputRef = React.createRef();
+      this.testRef = React.createRef();
       this.state = {
                     order:1,
                     salary:0, 
@@ -126,9 +125,10 @@ class Job extends Component  {
  
     render() 
     {
+        
       console.log("main render");
         return(<div>
-
+          
           <div style={{display:"flex"}}>
             <div>
               <a href="http://www.duunitori.fi"><img width="100" src="https://duunitori.imgix.net/media/images/logos/logo-duunitori-rgb-vertical-mono.png?auto=format"/></a>
@@ -212,8 +212,9 @@ class Job extends Component  {
 const InputEntry = React.forwardRef((props,ref) =>
 {
   const [inputText, setInputText] = useState("");
+  const [flagDelete, setFlagDelete] = useState(false);
 
-
+  const keyHelper = React.useRef(true);
   const inputRef = React.useRef();
 
   React.useImperativeHandle(ref, () => ({
@@ -242,21 +243,48 @@ const InputEntry = React.forwardRef((props,ref) =>
       else 
       tmp.push(e.target.value);
     }
+    setFlagDelete(false);
     console.log("--> "+inputText);
     setInputText("");
     props.set(tmp);
     }
   }
 
-return (
-  <>
-  { props.values.map((e,index)=>
-    <div key={index} style={{padding:"1px"}}>
-    <Button className="rounded-pill" onClick={(e)=>{
+  const keyDown = (e) => {
+    if ( !flagDelete && keyHelper.current && e.key == "Backspace" && inputRef.current.selectionStart == 0)
+    {
+      keyHelper.current=false;
+      setFlagDelete(true);
+    } 
+     if ( flagDelete && keyHelper.current && e.key == "Backspace" && inputRef.current.selectionStart == 0)
+    {
+      keyHelper.current=false;
+      setFlagDelete(false);
+      const tmp = props.values.slice();
+      tmp.pop();
+      props.set(tmp);
+    }
+  }
+
+  const keyUp = (e) => {
+    keyHelper.current = true;
+  }
+
+  const deleteEntry = (index) => {
     const tmp = props.values.slice();
     tmp.splice(index,1);
-    props.set(tmp);
-  }}>{e}</Button></div>)}
+  props.set(tmp);
+  }
+
+return (
+  <>
+  { props.values.map(
+    (e,index)=>
+    <div key={index} style={{padding:"1px"}}>
+      <Button className="rounded-pill" variant={index==props.values.length-1 && flagDelete? "danger":"primary"} onClick={(e)=>deleteEntry(index)}>{e}</Button>
+    </div>
+    )
+    }
 
   { Number(props.fillId) > 0 &&
   <datalist id={"fill"+props.fillId}>
@@ -268,8 +296,11 @@ return (
   ref={inputRef} 
   type="text" 
   value={inputText}  
+  onKeyDown={e => keyDown(e)}
+  onKeyUp={e => keyUp(e)}
   onKeyPress={e => keyPress(e)} 
   onChange={ (e)=>{ setInputText(e.target.value); }}
+  onBlur={ (e)=>setFlagDelete(false)}
   />
   
 
@@ -278,7 +309,7 @@ return (
 })
       
 
-const JobList = React.memo( function JobList (props)
+const JobList = React.memo( (props) =>
 {
   const numPerPage=50;
   const [next, setNext] = useState(numPerPage);
@@ -361,7 +392,8 @@ const JobList = React.memo( function JobList (props)
 
   return (
   <>
-       <h4>Löydetyt työpaikat ({jobList.length} kpl)</h4>
+      
+       <strong>Löydetyt työpaikat ({jobList.length} kpl)</strong>
           <hr/>
           { jobList.slice(0,next).map((jobDetail, index)=> <JobEntry jobDetail={jobDetail} key={index} index={index}/>)}
           { next < jobList.length && 
@@ -373,7 +405,7 @@ const JobList = React.memo( function JobList (props)
   )
 })
 
-function JobEntry ({jobDetail,index})
+const  JobEntry = ({jobDetail,index}) =>
 {
   function showDesc()
   {
